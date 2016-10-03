@@ -9,19 +9,20 @@
 # * NUM_PARTITIONS: configure the default number of log partitions per topic
 
 # Configure advertised host/port if we run in helios
+# shellcheck disable=SC2154
 if [ ! -z "$HELIOS_PORT_kafka" ]; then
-    ADVERTISED_HOST=`echo $HELIOS_PORT_kafka | cut -d':' -f 1 | xargs -n 1 dig +short | tail -n 1`
-    ADVERTISED_PORT=`echo $HELIOS_PORT_kafka | cut -d':' -f 2`
+    ADVERTISED_HOST=$(echo "$HELIOS_PORT_kafka" | cut -d':' -f 1 | xargs -n 1 dig +short | tail -n 1)
+    ADVERTISED_PORT=$(echo "$HELIOS_PORT_kafka" | cut -d':' -f 2)
 fi
 
 # Set the external host and port
 if [ ! -z "$ADVERTISED_HOST" ]; then
     echo "advertised host: $ADVERTISED_HOST"
-    sed -r -i "s/#(advertised.host.name)=(.*)/\1=$ADVERTISED_HOST/g" $KAFKA_HOME/config/server.properties
+    sed -i "\$aadvertised.host.name=$ADVERTISED_HOST" "$KAFKA_HOME/config/server.properties"
 fi
 if [ ! -z "$ADVERTISED_PORT" ]; then
     echo "advertised port: $ADVERTISED_PORT"
-    sed -r -i "s/#(advertised.port)=(.*)/\1=$ADVERTISED_PORT/g" $KAFKA_HOME/config/server.properties
+    sed -i "\$aadvertised.port=$ADVERTISED_PORT" "$KAFKA_HOME/config/server.properties"
 fi
 
 # Set the zookeeper chroot
@@ -38,30 +39,30 @@ if [ ! -z "$ZK_CHROOT" ]; then
     }
 
     # configure kafka
-    sed -r -i "s/(zookeeper.connect)=(.*)/\1=localhost:2181\/$ZK_CHROOT/g" $KAFKA_HOME/config/server.properties
+    sed -r -i "s/(zookeeper.connect)=(.*)/\1=localhost:2181\/$ZK_CHROOT/g" "$KAFKA_HOME/config/server.properties"
 fi
 
 # Allow specification of log retention policies
 if [ ! -z "$LOG_RETENTION_HOURS" ]; then
     echo "log retention hours: $LOG_RETENTION_HOURS"
-    sed -r -i "s/(log.retention.hours)=(.*)/\1=$LOG_RETENTION_HOURS/g" $KAFKA_HOME/config/server.properties
+    sed -r -i "s/(log.retention.hours)=(.*)/\1=$LOG_RETENTION_HOURS/g" "$KAFKA_HOME/config/server.properties"
 fi
 if [ ! -z "$LOG_RETENTION_BYTES" ]; then
     echo "log retention bytes: $LOG_RETENTION_BYTES"
-    sed -r -i "s/#(log.retention.bytes)=(.*)/\1=$LOG_RETENTION_BYTES/g" $KAFKA_HOME/config/server.properties
+    sed -r -i "s/#(log.retention.bytes)=(.*)/\1=$LOG_RETENTION_BYTES/g" "$KAFKA_HOME/config/server.properties"
 fi
 
 # Configure the default number of log partitions per topic
 if [ ! -z "$NUM_PARTITIONS" ]; then
     echo "default number of partition: $NUM_PARTITIONS"
-    sed -r -i "s/(num.partitions)=(.*)/\1=$NUM_PARTITIONS/g" $KAFKA_HOME/config/server.properties
+    sed -r -i "s/(num.partitions)=(.*)/\1=$NUM_PARTITIONS/g" "$KAFKA_HOME/config/server.properties"
 fi
 
 # Enable/disable auto creation of topics
 if [ ! -z "$AUTO_CREATE_TOPICS" ]; then
     echo "auto.create.topics.enable: $AUTO_CREATE_TOPICS"
-    echo "auto.create.topics.enable=$AUTO_CREATE_TOPICS" >> $KAFKA_HOME/config/server.properties
+    echo "auto.create.topics.enable=$AUTO_CREATE_TOPICS" >> "$KAFKA_HOME/config/server.properties"
 fi
 
 # Run Kafka
-$KAFKA_HOME/bin/kafka-server-start.sh $KAFKA_HOME/config/server.properties
+"$KAFKA_HOME/bin/kafka-server-start.sh" "$KAFKA_HOME/config/server.properties"
